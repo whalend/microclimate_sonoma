@@ -21,6 +21,7 @@ class(SpTimeDB.regular.SW)
 class(eof_pred)
 eof_pred$time <- SpTimeDB.regular.SW$time
 
+# Plot temperature against time for one site ####
 library(ggplot2)
 plot(SpTimeDB.regular.SW$time, SpTimeDB.regular.SW$ANN01, pch = ".",
      xlab = "time", ylab = "temperature", main = "Site: ANN01 - unfilled")
@@ -44,7 +45,7 @@ names(d1)
 # all.equal(eof_pred, SpTimeDB.regular.SW)
 
 
-### Extract each date-time element to its own variable
+### Extract each date-time element to its own variable ####
 library(lubridate)
 d2 <- eof_pred
 d2$year <- year(d2$time)
