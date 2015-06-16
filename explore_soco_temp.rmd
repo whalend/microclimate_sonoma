@@ -10,13 +10,17 @@ long_temp <- readRDS("Temperature/eof_pred_long.rds")# long format
 wide_temp <- readRDS("Temperature/eof_pred_wide.rds")
 ```
 
-```{r examine/compare data structure}
+```{r examine/compare data structure, message=FALSE}
 str(long_temp)
 str(wide_temp)
 names(long_temp)
 names(wide_temp)
 summary(long_temp)
 summary(wide_temp)
+
+library(plyr); library(dplyr)
+long_temp <- select (long_temp, -posix_time)
+long_temp$date <- as.Date(long_temp$chr_date, format = "%Y-%m-%d %H")
 ```
 
 
@@ -25,11 +29,9 @@ summary(wide_temp)
 'rs' indicates "rainy season" with the two digits immediately following indicating the corresponding sampling year. For example, `rs04` indicates the 2004 rainy season, with dates from November 1st, 2003 through May 31st, 2004 (2003-11-01 to 2004-05-31).
 
 ```{r calculate hour counts, message=FALSE}
-library(plyr); library(dplyr)
+library(dplyr)
 
-long_temp <- select(long_temp, -posix_time)
-long_temp$date <- as.Date(long_temp$chr_date, format = "%Y-%m-%d %H")
-
+# 2004 rainy season ----
 rs04 <- long_temp %>% filter(date >= "2003-11-01" & date <= "2004-05-31")
 rs04hrs <- rs04 %>% 
       filter(temp >= 14 & temp <= 20) %>% 
@@ -42,10 +44,18 @@ rs04hrs <- left_join(rs04hrs, rs04 %>%
       filter(temp <= 10) %>% 
       group_by(plotid) %>% summarise(hrs04_blw10 = length(temp)),
       by = "plotid")
+tmp <- rs04 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax04 = mean(daily_tmax), avg_tmin04 = mean(daily_tmin))
+rs04hrs <- left_join(rs04hrs, tmp, by = "plotid")
+
 # The variable names are the rainy season and the threshold or range for which the number of hours were counted, i.e., 14_20 indicates a range between 14 and 20 C (inclusive), abv25 indicates number of times the temperature exceeded 25 C, blw10 indicates the number of times the temperature was below 10 C
 
 # I'm not sure that the desicatting temperature (i.e. above 25 C) moakes much as a rainy season predictor. But should show very obviously that the temperatures seldom reach that high during this time of the year.
 
+# 2005 rainy season ----
 rs05 <- long_temp %>% filter(date >= "2004-11-01" & date <= "2005-05-31")
 rs05hrs <- rs05 %>% filter(temp >= 14 & temp <= 20) %>% 
       group_by(plotid) %>% summarise(hrs05_14_20 = length(temp))
@@ -57,7 +67,14 @@ rs05hrs <- left_join(rs05hrs, rs05 %>%
       filter(temp <= 10) %>% 
       group_by(plotid) %>% summarise(hrs05_blw10 = length(temp)),
       by = "plotid")
+tmp <- rs05 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax05 = mean(daily_tmax), avg_tmin05 = mean(daily_tmin))
+rs05hrs <- left_join(rs05hrs, tmp, by = "plotid")
 
+# 2006 rainy season ----
 rs06 <- long_temp %>% filter(date >= "2005-11-01" & date <= "2006-05-31")
 rs06hrs <- rs06 %>% filter(temp >= 14 & temp <= 20) %>% 
       group_by(plotid) %>% summarise(hrs06_14_20 = length(temp))
@@ -69,8 +86,12 @@ rs06hrs <- left_join(rs06hrs, rs06 %>%
       filter(temp <= 10) %>% 
       group_by(plotid) %>% summarise(hrs06_blw10 = length(temp)),
       by = "plotid")
-
-ls(pattern = "*hrs")
+tmp <- rs06 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax06 = mean(daily_tmax), avg_tmin06 = mean(daily_tmin))
+rs06hrs <- left_join(rs06hrs, tmp, by = "plotid")
 
 # rs_14_20 <- long_temp %>% filter(
 #       date >= "2003-11-01" & date <= "2004-05-31" | 
@@ -88,6 +109,7 @@ ls(pattern = "*hrs")
 # 
 # summary(rs_14_20)
 
+# 2007 rainy season ----
 rs07 <- long_temp %>% filter(date >= "2006-11-01" & date <= "2007-05-31")
 rs07hrs <- left_join(rs07 %>% filter(temp >= 14 & temp <= 20) %>%
                            group_by(plotid) %>% 
@@ -100,40 +122,151 @@ rs07hrs <- left_join(rs07 %>% filter(temp >= 14 & temp <= 20) %>%
                            group_by(plotid) %>% 
                            summarise(hrs07_blw10 = length(temp)),
                 by = "plotid")
+tmp <- rs07 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax07 = mean(daily_tmax), avg_tmin07 = mean(daily_tmin))
+rs07hrs <- left_join(rs07hrs, tmp, by = "plotid")
 
-rs06hrs <- rs06 %>% filter(temp >= 14 & temp <= 20) %>% 
-      group_by(plotid) %>% summarise(hrs06_14_20 = length(temp))
-rs06hrs <- left_join(rs06hrs, rs06 %>% 
-      filter(temp >= 25) %>% 
-      group_by(plotid) %>% summarise(hrs06_abv25 = length(temp)),
-      by = "plotid")
-rs06hrs <- left_join(rs06hrs, rs06 %>% 
-      filter(temp <= 10) %>% 
-      group_by(plotid) %>% summarise(hrs06_blw10 = length(temp)),
-      by = "plotid")
+# 2008 rainy season ----
 rs08 <- long_temp %>% filter(date >= "2007-11-01" & date <= "2008-05-31")
+rs08hrs <- rs08 %>% filter(temp >= 14 & temp <= 20) %>% 
+      group_by(plotid) %>% summarise(hrs08_14_20 = length(temp))
+rs08hrs <- left_join(rs08hrs, rs08 %>% 
+      filter(temp >= 25) %>% 
+      group_by(plotid) %>% summarise(hrs08_abv25 = length(temp)),
+      by = "plotid")
+rs08hrs <- left_join(rs08hrs, rs08 %>% 
+      filter(temp <= 10) %>% 
+      group_by(plotid) %>% summarise(hrs08_blw10 = length(temp)),
+      by = "plotid")
+tmp <- rs08 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax08 = mean(daily_tmax), avg_tmin08 = mean(daily_tmin))
+rs08hrs <- left_join(rs08hrs, tmp, by = "plotid")
+
+# 2009 rainy season ----
 rs09 <- long_temp %>% filter(date >= "2008-11-01" & date <= "2009-05-31")
+rs09hrs <- rs09 %>% filter(temp >= 14 & temp <= 20) %>% 
+      group_by(plotid) %>% summarise(hrs09_14_20 = length(temp))
+rs09hrs <- left_join(rs09hrs, rs09 %>% 
+      filter(temp >= 25) %>% 
+      group_by(plotid) %>% summarise(hrs09_abv25 = length(temp)),
+      by = "plotid")
+rs09hrs <- left_join(rs09hrs, rs09 %>% 
+      filter(temp <= 10) %>% 
+      group_by(plotid) %>% summarise(hrs09_blw10 = length(temp)),
+      by = "plotid")
+tmp <- rs09 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax09 = mean(daily_tmax), avg_tmin09 = mean(daily_tmin))
+rs09hrs <- left_join(rs09hrs, tmp, by = "plotid")
+
+# 2010 rainy season ----
 rs10 <- long_temp %>% filter(date >= "2009-11-01" & date <= "2010-05-31")
+rs10hrs <- rs10 %>% filter(temp >= 14 & temp <= 20) %>% 
+      group_by(plotid) %>% summarise(hrs10_14_20 = length(temp))
+rs10hrs <- left_join(rs10hrs, rs10 %>% 
+      filter(temp >= 25) %>% 
+      group_by(plotid) %>% summarise(hrs10_abv25 = length(temp)),
+      by = "plotid")
+rs10hrs <- left_join(rs10hrs, rs10 %>% 
+      filter(temp <= 10) %>% 
+      group_by(plotid) %>% summarise(hrs10_blw10 = length(temp)),
+      by = "plotid")
+tmp <- rs10 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax10 = mean(daily_tmax), avg_tmin10 = mean(daily_tmin))
+rs10hrs <- left_join(rs10hrs, tmp, by = "plotid")
+
+# 2011 rainy season ----
 rs11 <- long_temp %>% filter(date >= "2010-11-01" & date <= "2011-05-31")
+rs11hrs <- rs11 %>% filter(temp >= 14 & temp <= 20) %>% 
+      group_by(plotid) %>% summarise(hrs11_14_20 = length(temp))
+rs11hrs <- left_join(rs11hrs, rs11 %>% 
+      filter(temp >= 25) %>% 
+      group_by(plotid) %>% summarise(hrs11_abv25 = length(temp)),
+      by = "plotid")
+rs11hrs <- left_join(rs11hrs, rs11 %>% 
+      filter(temp <= 10) %>% 
+      group_by(plotid) %>% summarise(hrs11_blw10 = length(temp)),
+      by = "plotid")
+tmp <- rs11 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax11 = mean(daily_tmax), avg_tmin11 = mean(daily_tmin))
+rs11hrs <- left_join(rs11hrs, tmp, by = "plotid")
+
+# 2012 rainy season ----
 rs12 <- long_temp %>% filter(date >= "2011-11-01" & date <= "2012-05-31")
+rs12hrs <- rs12 %>% filter(temp >= 14 & temp <= 20) %>% 
+      group_by(plotid) %>% summarise(hrs12_14_20 = length(temp))
+rs12hrs <- left_join(rs12hrs, rs12 %>% 
+      filter(temp >= 25) %>% 
+      group_by(plotid) %>% summarise(hrs12_abv25 = length(temp)),
+      by = "plotid")
+rs12hrs <- left_join(rs12hrs, rs12 %>% 
+      filter(temp <= 10) %>% 
+      group_by(plotid) %>% summarise(hrs12_blw10 = length(temp)),
+      by = "plotid")
+tmp <- rs12 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax12 = mean(daily_tmax), avg_tmin12 = mean(daily_tmin))
+rs12hrs <- left_join(rs12hrs, tmp, by = "plotid")
+
+# 2014 rainy season ----
 rs14 <- long_temp %>% filter(date >= "2013-11-01" & date <= "2014-05-31")
-      
-      summarize(long_temp, daily_max_temp = max(temp), hrs_14_20 = count(temp >= 14 & temp <= 20))
-      
-summary(filter(long_temp, date == "2003-05-01"))
+rs14hrs <- rs14 %>% filter(temp >= 14 & temp <= 20) %>% 
+      group_by(plotid) %>% summarise(hrs14_14_20 = length(temp))
+rs14hrs <- left_join(rs14hrs, rs14 %>% 
+      filter(temp >= 25) %>% 
+      group_by(plotid) %>% summarise(hrs14_abv25 = length(temp)),
+      by = "plotid")
+rs14hrs <- left_join(rs14hrs, rs14 %>% 
+      filter(temp <= 10) %>% 
+      group_by(plotid) %>% summarise(hrs14_blw10 = length(temp)),
+      by = "plotid")
+tmp <- rs14 %>%
+      group_by(plotid, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp))
+tmp <- tmp %>% group_by(plotid) %>% 
+      summarise(avg_tmax14 = mean(daily_tmax), avg_tmin14 = mean(daily_tmin))
+rs14hrs <- left_join(rs14hrs, tmp, by = "plotid")
+
+rm(tmp)
+# ls(pattern = "*hrs")
+
+# Combine variables from each rainy season ----           
+rainy_season_temps <- join_all(list(
+      rs04hrs,rs05hrs,rs06hrs,rs07hrs,rs08hrs,
+      rs09hrs,rs10hrs,rs11hrs,rs12hrs,rs14hrs), by = "plotid")
+summary(rainy_season_temps)
+write.csv(rainy_season_temps, "~/GitHub/superspreaders/analysis/data/rainy_season_temps.csv")
 ```
 
 
 ```{r plotting}
+library(ggplot2)
 # Subset to fewer plots
 dt <- long_temp %>%
-      select(year, temp, plotid) %>%
+      select(year, temp, plotid, date) %>%
       group_by(as.factor(year)) %>%
       filter(plotid == "ANN01" | plotid == "SUGAR23" | plotid == "FOP04")
 
-qplot(x = posix_time, y = temp, 
+qplot(x = year, y = avg_temp_yr, 
       data = dt %>% 
-            group_by(year) %>%
+            group_by(year, plotid) %>%
+            select(year, plotid, temp) %>% 
             summarise(avg_temp_yr = mean(temp)),
       facet = plotid ~ ., color = plotid, geom = c("point", "line")
             )
