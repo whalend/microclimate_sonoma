@@ -69,6 +69,8 @@ rainy_season_temps <- left_join(rainy_season_temps, long_temp %>%
       summarise(avg_tmax = mean(daily_tmax), avg_tmin = mean(daily_tmin)),
       by = c("plotid", "sample_year"))
 
+rainy_season_temps <- filter(rainy_season_temps, sample_year != "NA")
+
 write.csv(rainy_season_temps, "~/GitHub/superspreaders/analysis/data/rainy_season_temps.csv")
 ```
 
