@@ -109,22 +109,23 @@ qplot(x = year, y = avg_temp_yr,
 
 First, I added a variable to indicate the year of disease sampling the summer season range of dates represents. The "summer season" is defined here as June 1st - September 30th. Summer temperatures are most likely to influence the oversummering of the pathogen on leaves due to increasing abscision of infected leaves under hotter conditions. The infected leaves that survive contribute to the inoculum capacity the following season, because the surviving infections enable pathogen reproduction to progress more quickly when wet conditions return. Based on this I'm calculating temperature aggregates for summers 2003 - 2013, which can be used in models as variables predicting infection levels the following year. E.g., the 2003 temperatures would be used as a predictor for the 2004 symptomatic leaf count.
 
+I'm going to label the dates according to the sample year so that they match up with the ecological data more easily.
+
 ```{r create sample season indicator, message=FALSE}
 library(dplyr)
 summer_season_temps <- long_temp %>% 
       mutate(sample_year = ifelse(
-            date >= "2003-06-01" & date <= "2003-09-30", 2003, 
-            ifelse(date >= "2004-06-01" & date <= "2004-09-30", 2004,
-              ifelse(date >= "2005-06-01" & date <= "2005-09-30", 2005,
-                ifelse(date >= "2006-06-01" & date <= "2006-09-30", 2006,
-                  ifelse(date >= "2007-06-01" & date <= "2007-09-30", 2007,
-                    ifelse(date >= "2008-06-01" & date <= "2008-09-30", 2008,
-                      ifelse(date >= "2009-06-01" & date <= "2009-09-30", 2009,
-        ifelse(date >= "2010-06-01" & date <= "2010-09-30", 2010, 
-          ifelse(date >= "2011-06-01" & date <= "2011-09-30", 2011,
-            ifelse(date >= "2012-06-01" & date <= "2012-09-30", 2012,
-              ifelse(date >= "2013-06-01" & date <= "2013-09-30", 2013, NA)
-)))))))))))
+            date >= "2003-06-01" & date <= "2003-09-30", 2004, 
+            ifelse(date >= "2004-06-01" & date <= "2004-09-30", 2005,
+              ifelse(date >= "2005-06-01" & date <= "2005-09-30", 2006,
+                ifelse(date >= "2006-06-01" & date <= "2006-09-30", 2007,
+                  ifelse(date >= "2007-06-01" & date <= "2007-09-30", 2008,
+                    ifelse(date >= "2008-06-01" & date <= "2008-09-30", 2009,
+                      ifelse(date >= "2009-06-01" & date <= "2009-09-30", 2010,
+        ifelse(date >= "2010-06-01" & date <= "2010-09-30", 2011, 
+          ifelse(date >= "2011-06-01" & date <= "2011-09-30", 2012,
+            ifelse(date >= "2013-06-01" & date <= "2013-09-30", 2014, NA)
+))))))))))
 
 summer_season_temps <- (filter(summer_season_temps, is.na(sample_year)==F))
 summary(summer_season_temps)
@@ -146,7 +147,7 @@ summer_select_temps <- left_join(summer_select_temps, summer_season_temps %>%
                                   summarise(hrs_abv20 = length(temp)),
                             by = c("plotid", "sample_year"))
 
-# hours at cool, 'persisting' temperatures, <= 15 C (~59 F)
+# hours at cool, 'persisting' temperatures, <= 18 C (~64 F)
 summer_select_temps <- left_join(
       summer_select_temps, summer_season_temps %>%
             filter(temp <= 18) %>% 
