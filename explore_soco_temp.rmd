@@ -84,7 +84,7 @@ rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>%
 
 summary(rs_select_temps)
 
-write.csv(rs_select_temps, "~/GitHub/superspreaders/analysis/data/rs_select_temps.csv")
+write.csv(rs_select_temps, "~/GitHub/superspreaders/analysis/data/rs_select_temps.csv", row.names = F)
 ```
 
 
@@ -166,6 +166,6 @@ summer_select_temps <- left_join(
 
 summary(summer_select_temps)
 
-write.csv(summer_select_temps, "~/GitHub/superspreaders/analysis/data/summer_select_temps.csv")
+write.csv(summer_select_temps, "~/GitHub/superspreaders/analysis/data/summer_select_temps.csv", row.names = F)
 ```
 
