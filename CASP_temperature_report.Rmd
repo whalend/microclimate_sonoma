@@ -1,0 +1,113 @@
+---
+title: "CA State Parks - Temperature Data Summary"
+author: "Whalen Dillon"
+date: "August 19, 2016"
+output: html_document
+---
+
+
+```{r load libraries, echo=F}
+library(plyr); library(dplyr); library(tidyr); library(rgdal)
+```
+
+```{r load data, echo=F}
+wide_temp <- readRDS("Temperature/eof_pred_wide.rds")
+plots_shp <- readOGR("Shapefiles/", "Plot_201_LATLON")
+```
+```{r select state parks plots, echo=F}
+names(wide_temp)
+library(lubridate)
+wide_temp$year <- year(wide_temp$time)
+wide_temp$chr_date <- as.character(wide_temp$time)
+
+annadel_temps <- wide_temp %>% select(starts_with("ANN"), time:chr_date) 
+jlsp_temps <- wide_temp %>% select(starts_with("JLS"), time:chr_date)
+mccormick_temps <- wide_temp %>% select(starts_with("MCC"), time:chr_date)
+sugarloaf_temps <- wide_temp %>% select(starts_with("SUG"), time:chr_date)
+```
+
+```{r transform data to long format reference, eval=F, echo=F}
+# for all data if necessary, but ideally just apply to subsets
+library(lubridate)
+d2 <- eof_pred
+d2$year <- year(d2$time)
+d2$month <- month(d2$time)
+d2$day <- day(d2$time)
+d2$hour <- hour(d2$time)
+#d2$minute <- minute(d2$time)
+#d2$second <- second(d2$time)
+#d2$dec_date <- decimal_date(d2$time)
+
+# Convert POSIXt to character so data can be manipulated
+d2$chr_date <- as.character(d2$time)
+
+long_temp <- wide_temp %>% select(-time) %>% gather(plotid, temp, -year, -month, -day, -hour, -chr_date)
+long_temp$posix_time <- strptime(long_temp$chr_date, format="%Y-%m-%d %H", tz="UTC")
+class(long_temp$posix_time)# check class of variable
+```
+
+```{r transform CASP plots to long format, echo=F}
+annadel_temps_long <- annadel_temps %>% 
+      select(-time) %>% 
+      gather(plotid, temp, -year, -chr_date)
+annadel_temps_long$date <- as.Date(annadel_temps_long$chr_date, format = "%Y-%m-%d %H")
+
+jlsp_temps_long <- jlsp_temps %>% 
+      select(-time) %>% 
+      gather(plotid, temp, -year, -chr_date)
+jlsp_temps_long$date <- as.Date(jlsp_temps_long$chr_date, format = "%Y-%m-%d %H")
+
+mccormick_temps_long <- mccormick_temps %>% 
+      select(-time) %>% 
+      gather(plotid, temp, -year, -chr_date)
+mccormick_temps_long$date <- as.Date(mccormick_temps_long$chr_date, format = "%Y-%m-%d %H")
+
+sugarloaf_temps_long <- sugarloaf_temps %>% 
+      select(-time) %>% 
+      gather(plotid, temp, -year, -chr_date)
+sugarloaf_temps_long$date <- as.Date(sugarloaf_temps_long$chr_date, format = "%Y-%m-%d %H")
+
+# summary(annadel_temps_long)
+```
+
+```{r plot Annadel temperature data, echo=F}
+library(ggplot2); library(scales)
+annadel_daily_data <- annadel_temps_long %>% 
+      group_by(date, year, plotid) %>% 
+      select(date, year, plotid, temp) %>% 
+      summarise(avg_temp = mean(temp), 
+                tmax = max(temp), 
+                tmin = min(temp)) %>% 
+      group_by(date, year) %>% 
+      summarise(avg_temp = mean(avg_temp),
+                avg_tmax = mean(tmax),
+                avg_tmin = mean(tmin))
+
+annadel_annual <- annadel_daily_data %>% 
+      group_by(year) %>% 
+      summarise(avg_temp = mean(avg_temp),
+                avg_tmax = mean(avg_tmax),
+                avg_tmin = mean(avg_tmin))
+
+annadel_daily_plot <- ggplot(annadel_daily_data, aes(x = date))
+annadel_daily_plot <- annadel_daily_plot +
+      # geom_line(aes(y = avg_temp)) +
+      geom_line(aes(y = avg_tmin, color = "Min Temperature"), size = .25) +
+      geom_line(aes(y = avg_tmax, color = "Max Temperature"), size = .25) +
+      scale_x_date(date_breaks = "1 year", 
+                   labels = date_format("%m/%Y")) +
+      # scale_color_brewer(palette = "Dark2")
+      scale_color_manual("", breaks = c("Max Temperature","Min Temperature"),
+                         values = c("darkorange","darkgreen")) +
+      xlab("Date") +
+      ylab("Temperature ºC") +
+      ggtitle("Average Temperatures in Annadel State Park")
+
+annadel_daily_plot +
+      theme_bw() +
+      theme(legend.position = "bottom")
+      
+
+```
+
+
