@@ -47,7 +47,7 @@ summary(rainy_season_temps)
 
 Now I use the `sample_year` as a grouping variable to calculate the various temperature variables.
 
-```{r calculate hour counts}
+```{r calculate rainy season hour counts}
 # hours at "optimal" temperature, 14-20 C
 rs_select_temps <- rainy_season_temps %>% 
       filter(temp >= 14 & temp <= 20) %>% 
@@ -98,6 +98,7 @@ write.csv(rs_select_temps, "~/GitHub/superspreaders/analysis/data/rs_select_temp
 
 ```{r plotting}
 library(ggplot2)
+library(scales)
 # Subset to fewer plots
 dt <- long_temp %>%
       select(year, temp, plotid, date) %>%
@@ -109,8 +110,18 @@ qplot(x = year, y = avg_temp_yr,
             group_by(year, plotid) %>%
             select(year, plotid, temp) %>% 
             summarise(avg_temp_yr = mean(temp)),
-      facet = plotid ~ ., color = plotid, geom = c("point", "line")
+      facets = plotid ~ ., color = plotid, geom = c("point", "line")
             )
+
+tempXyear <- ggplot(long_temp %>% filter(year != 2003), aes(date, temp))
+
+tempXyear + 
+      geom_line() +
+      scale_x_date(date_breaks = "1 year", 
+                   labels = date_format("%m/%y"),
+                   date_minor_breaks = "6 month") +
+      xlab("Date (month/year)") +
+      ylab("Temperature (degrees Celsius)")
 ```
 
 ## Subset data to summer season temperature variables for each sampling year
