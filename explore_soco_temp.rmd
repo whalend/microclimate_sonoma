@@ -7,16 +7,16 @@ output: html_document
 
 ```{r load data}
 long_temp <- readRDS("Temperature/eof_pred_long.rds")# long format
-wide_temp <- readRDS("Temperature/eof_pred_wide.rds")
+# wide_temp <- readRDS("Temperature/eof_pred_wide.rds")
 ```
 
 ```{r examine/compare data structure, message=FALSE}
-str(long_temp)
-str(wide_temp)
-names(long_temp)
-names(wide_temp)
-summary(long_temp)
-summary(wide_temp)
+# str(long_temp)
+# str(wide_temp)
+# names(long_temp)
+# names(wide_temp)
+# summary(long_temp)
+# summary(wide_temp)
 
 library(plyr); library(dplyr)
 long_temp <- select (long_temp, -posix_time)
@@ -48,26 +48,42 @@ summary(rainy_season_temps)
 Now I use the `sample_year` as a grouping variable to calculate the various temperature variables.
 
 ```{r calculate rainy season hour counts}
-# hours at "optimal" temperature, 14-20 C
+# hours within "optimal" temperature, 14-20 C
 rs_select_temps <- rainy_season_temps %>% 
       filter(temp >= 14 & temp <= 20) %>% 
-      group_by(plotid, sample_year) %>% summarise(hrs_14_20 = length(temp))
+      group_by(plotid, sample_year) %>% 
+      summarise(hrs_14_20 = length(temp))
 
-# hours at dessicating, slow/no growth temperatures, >= 25 C
+# hours within "optimal" temperature, 10-20 C
+rs_select_temps <- left_join(rs_select_temps, 
+                             rainy_season_temps %>% 
+                                   filter(temp >= 10 & temp <= 20) %>% 
+                                   group_by(plotid, sample_year) %>%
+                                   summarise(hrs_10_20 = length(temp)),
+                             by = c("plotid", "sample_year"))
+
+# hours at dessicating, slow/no growth temperatures, ≥ 25 C
 rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>% 
                                   filter(temp >= 25) %>%
                                   group_by(plotid, sample_year) %>%
                                   summarise(hrs_abv25 = length(temp)),
                             by = c("plotid", "sample_year"))
 
-# hours at dessicating, slow/no growth temperatures, > 20 C
+# hours at/above dessicating, slow/no growth temperatures, ≥ 20 C
 rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>% 
-                                  filter(temp > 20) %>%
+                                  filter(temp >= 20) %>%
                                   group_by(plotid, sample_year) %>%
                                   summarise(hrs_abv20 = length(temp)),
                             by = c("plotid", "sample_year"))
 
-# hours at cool slow growing temperatures, <= 10 C
+# hours below dessicating, slow/no growth temperatures, < 20 C
+rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>% 
+                                  filter(temp < 20) %>%
+                                  group_by(plotid, sample_year) %>%
+                                  summarise(hrs_abv20 = length(temp)),
+                            by = c("plotid", "sample_year"))
+
+# hours at cool slow growing temperatures, ≤ 10 C
 rs_select_temps <- left_join(rs_select_temps, 
                                 rainy_season_temps %>% 
                                       filter(temp <= 10) %>% 
@@ -75,13 +91,22 @@ rs_select_temps <- left_join(rs_select_temps,
                                       summarise(hrs_blw10 = length(temp)),
                                 by = c("plotid", "sample_year"))
 
-# hours at cool slow growing temperatures, <= 14 C
+# hours at cool slow growing temperatures, ≤ 14 C
 rs_select_temps <- left_join(rs_select_temps, 
                                 rainy_season_temps %>% 
                                       filter(temp <= 14) %>% 
                                       group_by(plotid, sample_year) %>%
                                       summarise(hrs_blw14 = length(temp)),
                                 by = c("plotid", "sample_year"))
+
+
+rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>% 
+                                  group_by(plotid, sample_year, date) %>% 
+      summarise(daily_tmax = max(temp), daily_tmin = min(temp)) %>% 
+      group_by(plotid, sample_year) %>% 
+      summarise(avg_tmax = mean(daily_tmax), avg_tmin = mean(daily_tmin)),
+      by = c("plotid", "sample_year"))
+
 
 rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>% 
                                   group_by(plotid, sample_year, date) %>% 
@@ -155,10 +180,11 @@ summary(summer_season_temps)
 ```{r calculate summer temp hour counts}
 # hours at 'extreme' desiccating, slow/no growth temperatures, >= 25 C (~77 F)
 # Most likely to enhance leaf abscision, especially of infected
-summer_select_temps <- summer_season_temps %>% 
-      filter(temp >= 30) %>%
-      group_by(plotid, sample_year) %>%
-      summarise(hrs_abv25 = length(temp))
+
+# summer_select_temps <- summer_season_temps %>% 
+#       filter(temp >= 30) %>%
+#       group_by(plotid, sample_year) %>%
+#       summarise(hrs_abv30 = length(temp))
 
 summer_select_temps <- summer_season_temps %>% 
       filter(temp >= 25) %>%
@@ -177,7 +203,7 @@ summer_select_temps <- left_join(
       summer_select_temps, summer_season_temps %>%
             filter(temp < 20) %>% 
             group_by(plotid, sample_year) %>%
-            summarise(hrs_blw18 = length(temp)),
+            summarise(hrs_blw20 = length(temp)),
       by = c("plotid", "sample_year"))
 
 summer_select_temps <- left_join(
