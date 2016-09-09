@@ -80,7 +80,7 @@ rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>%
 rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>% 
                                   filter(temp < 20) %>%
                                   group_by(plotid, sample_year) %>%
-                                  summarise(hrs_abv20 = length(temp)),
+                                  summarise(hrs_blw20 = length(temp)),
                             by = c("plotid", "sample_year"))
 
 # hours at cool slow growing temperatures, ≤ 10 C
@@ -107,13 +107,6 @@ rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>%
       summarise(avg_tmax = mean(daily_tmax), avg_tmin = mean(daily_tmin)),
       by = c("plotid", "sample_year"))
 
-
-rs_select_temps <- left_join(rs_select_temps, rainy_season_temps %>% 
-                                  group_by(plotid, sample_year, date) %>% 
-      summarise(daily_tmax = max(temp), daily_tmin = min(temp)) %>% 
-      group_by(plotid, sample_year) %>% 
-      summarise(avg_tmax = mean(daily_tmax), avg_tmin = mean(daily_tmin)),
-      by = c("plotid", "sample_year"))
 
 summary(rs_select_temps)
 
