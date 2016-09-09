@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xml:lang="en"><Esri><CreaDate>20140715</CreaDate><CreaTime>15461900</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files (x86)\arcgis\desktop10.1\ArcToolbox\Toolboxes\Spatial Analyst Tools.tbx\Aggregate" Date="20140715" Time="154619">Aggregate veght1m.tif D:\Sonoma\Covariates\veght1m_A.tif 16 MEAN EXPAND DATA</Process></lineage></DataProperties></Esri></metadata>
